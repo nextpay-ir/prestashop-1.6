@@ -9,6 +9,7 @@
 if (!defined('_PS_VERSION_'))
 	exit ;
 
+@session_start();
 include_once dirname(__FILE__).'/include/nextpay_payment.php';
 
 class nextpay extends PaymentModule {

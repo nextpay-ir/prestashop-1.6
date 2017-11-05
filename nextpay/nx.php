@@ -48,16 +48,19 @@ if (isset($_GET['do'])) {
 						$_SESSION['order' . $orderId] = '';
 						Tools::redirect('history.php');
 					} else {
-						echo $nextpay -> error($nextpay -> l('There is a problem.') . ' (' . $result . ')<br/>' . $nextpay -> l('Transaction ID') . ' : ' . $trans_id);
+						echo $nextpay -> error($nextpay_payment->code_error($result) . ' (' . $result . ')<br/>' . $nextpay -> l('Transaction ID') . ' : ' . $trans_id);
 					}
 
 				} else {
+					echo "hash session in not valid";
 					echo $nextpay -> error($nextpay -> l('There is a problem.'));
 				}
 			} else {
+				echo "session not found";
 				echo $nextpay -> error($nextpay -> l('There is a problem.'));
 			}
 		} else {
+			echo "params not send";
 			echo $nextpay -> error($nextpay -> l('There is a problem.'));
 		}
 	}
