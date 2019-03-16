@@ -1,13 +1,13 @@
 <?php
 /**d
- * @package    Nextpay payment module
- * @author     Nextpay
- * @copyright  2015
- * @version    1.00
- */
+* @package    Nextpay payment module
+* @author     Nextpay
+* @copyright  2015
+* @version    1.00
+*/
 
 if (!defined('_PS_VERSION_'))
-	exit ;
+exit ;
 
 @session_start();
 include_once dirname(__FILE__).'/include/nextpay_payment.php';
@@ -30,25 +30,25 @@ class nextpay extends PaymentModule {
 		$this->description = $this->l('Online Payment With Nextpay');
 		$this->confirmUninstall = $this->l('Are you sure you want to delete your details?');
 		if (!sizeof(Currency::checkPaymentCurrencies($this->id)))
-			$this->warning = $this->l('No currency has been set for this module');
+		$this->warning = $this->l('No currency has been set for this module');
 		$config = Configuration::getMultiple(array('nextpay_API'));
 		if (!isset($config['nextpay_API']))
-			$this->warning = $this->l('You have to enter your nextpay Api key to use nextpay for your online payments.');
+		$this->warning = $this->l('You have to enter your nextpay Api key to use nextpay for your online payments.');
 
 	}
 
 	public function install() {
 		if (!parent::install() || !Configuration::updateValue('nextpay_API', '') || !Configuration::updateValue('nextpay_LOGO', '') || !Configuration::updateValue('nextpay_HASH_KEY', $this->hash_key()) || !$this->registerHook('payment') || !$this->registerHook('paymentReturn'))
-			return false;
+		return false;
 		else
-			return true;
+		return true;
 	}
 
 	public function uninstall() {
 		if (!Configuration::deleteByName('nextpay_API') || !Configuration::deleteByName('nextpay_LOGO') || !Configuration::deleteByName('nextpay_HASH_KEY') || !parent::uninstall())
-			return false;
+		return false;
 		else
-			return true;
+		return true;
 	}
 
 	public function hash_key() {
@@ -81,31 +81,38 @@ class nextpay extends PaymentModule {
 	}
 
 	public function do_payment($cart) {
-		
+
+
+		$currency = $this->context->currency ;
+		if($currency->iso_code_num == 364 || $currency->iso_code == 'IRR'){
+			$is_rial = true ;
+		}else{
+			$is_rial = false ;
+		}
 		$Nextpay_API_Key = Configuration::get('nextpay_API');
 		$amount = floatval(number_format($cart ->getOrderTotal(true, 3), 2, '.', ''));
-		$callbackUrl = (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . __PS_BASE_URI__ . 'modules/nextpay/nx.php?do=call_back&amount=' . $amount ;
+		$callbackUrl = (Configuration::get('PS_SSL_ENABLED') ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . __PS_BASE_URI__ . 'modules/nextpay/nx.php?do=call_back&amount=' . $amount . '&IRR=' . $is_rial ;
 		$orderId = $cart ->id;
 
-        $parameters = array (
-            "api_key"=> $Nextpay_API_Key,
-            "order_id"=> $orderId,
-            "amount"=> $amount,
-            "callback_uri"=> $callbackUrl
-        );
+		$parameters = array (
+			"api_key"=> $Nextpay_API_Key,
+			"order_id"=> $orderId,
+			"amount"=> $is_rial ? $amount / 10 : $amount,
+			"callback_uri"=> $callbackUrl
+		);
 
-        $nextpay = new Nextpay_Payment($parameters);
-        $res = $nextpay->token();
-		
+		$nextpay = new Nextpay_Payment($parameters);
+		$res = $nextpay->token();
+
 		$hash = Configuration::get('nextpay_HASH');
 		$_SESSION['order' . $orderId] = md5($orderId . $amount . $hash);
 
 
 		if(intval($res->code) == -1){
-		    echo $this->success($this->l('Redirecting...'));
+			echo $this->success($this->l('Redirecting...'));
 			echo '<script>window.location=("http://api.nextpay.org/gateway/payment/' .  $res->trans_id . '");</script>';
 		} else {
-            echo $this->error($this->l('There is a problem.') . ' (' . $res->code . ')');
+			echo $this->error($this->l('There is a problem.') . ' (' . $res->code . ')');
 		}
 	}
 
@@ -121,12 +128,12 @@ class nextpay extends PaymentModule {
 		global $smarty;
 		$smarty ->assign('nextpay_logo', Configuration::get('nextpay_LOGO'));
 		if ($this->active)
-			return $this->display(__FILE__, 'nextpay_pay.tpl');
+		return $this->display(__FILE__, 'nextpay_pay.tpl');
 	}
 
 	public function hookPaymentReturn($params) {
 		if ($this->active)
-			return $this->display(__FILE__, 'zpconfirmation.tpl');
+		return $this->display(__FILE__, 'zpconfirmation.tpl');
 	}
 
 }
