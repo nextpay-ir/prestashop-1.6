@@ -64,7 +64,6 @@ class nextpay extends PaymentModule {
 		if (Tools::isSubmit('nextpay_setting')) {
 
 			Configuration::updateValue('nextpay_API', $_POST['nx_API']);
-			Configuration::updateValue('nextpay_LOGO', $_POST['nx_LOGO']);
 			$this->_html .= '<div class="conf confirm">' . $this->l('Settings updated') . '</div>';
 		}
 
